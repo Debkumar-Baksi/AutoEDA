@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoEDA - Select Plot Options</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> AutoEDA</h1>
+            <p class="subtitle">Select Plot Options</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            <i class="fas fa-{% if category == 'error' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="file-info-card">
+            <h2><i class="fas fa-file-csv"></i> {{ filename }}</h2>
+            <div class="file-stats">
+                <span><i class="fas fa-columns"></i> {{ num_columns }} columns</span>
+                <span><i class="fas fa-database"></i> {{ session.get('shape', [0, 0])[0] }} rows</span>
+            </div>
+        </div>
+
+        <form action="{{ url_for('analyze') }}" method="post" class="options-form">
+            <div class="form-section">
+                <h3><i class="fas fa-list"></i> Select Columns</h3>
+                <p class="section-help">Choose the columns you want to analyze. You can select multiple columns by holding Ctrl (or Cmd on Mac).</p>
+                
+                <div class="columns-grid">
+                    {% for col in columns %}
+                        <label class="column-checkbox">
+                            <input type="checkbox" name="columns" value="{{ col }}">
+                            <span class="checkbox-label">{{ col }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-chart-bar"></i> Select Plot Type</h3>
+                <p class="section-help">Choose the type of visualization you want to generate.</p>
+                
+                <div class="plot-types">
+                    <div class="plot-type-group">
+                        <h4>Single Variable Plots</h4>
+                        <div class="plot-options">
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="histogram" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>Histogram</span>
+                                    <small>Distribution of numeric data</small>
+                                </div>
+                            </label>
+                            
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="boxplot" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-box"></i>
+                                    <span>Boxplot</span>
+                                    <small>Quartiles and outliers</small>
+                                </div>
+                            </label>
+                            
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="countplot" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <span>Countplot</span>
+                                    <small>Frequency of categorical data</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="plot-type-group">
+                        <h4>Two Variable Plots</h4>
+                        <div class="plot-options">
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="barplot" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>Barplot</span>
+                                    <small>Categorical vs numeric</small>
+                                </div>
+                            </label>
+                            
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="lineplot" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Lineplot</span>
+                                    <small>Trends over time/categories</small>
+                                </div>
+                            </label>
+                            
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="scatterplot" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-dot-circle"></i>
+                                    <span>Scatterplot</span>
+                                    <small>Correlation between variables</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="plot-type-group">
+                        <h4>Multi-Variable Plots</h4>
+                        <div class="plot-options">
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="heatmap" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-th"></i>
+                                    <span>Heatmap</span>
+                                    <small>Correlation matrix</small>
+                                </div>
+                            </label>
+                            
+                            <label class="plot-option">
+                                <input type="radio" name="plot_type" value="pairplot" required>
+                                <div class="plot-option-content">
+                                    <i class="fas fa-th-large"></i>
+                                    <span>Pairplot</span>
+                                    <small>All pairwise relationships</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-magic"></i>
+                    Generate Plot
+                </button>
+                
+                <form action="{{ url_for('clear_session') }}" method="post" style="display: inline;">
+                    <button type="submit" class="secondary-btn">
+                        <i class="fas fa-upload"></i>
+                        Upload New File
+                    </button>
+                </form>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Form validation
+        const form = document.querySelector('.options-form');
+        const columnCheckboxes = document.querySelectorAll('input[name="columns"]');
+        const plotTypeRadios = document.querySelectorAll('input[name="plot_type"]');
+        const submitBtn = document.querySelector('.submit-btn');
+
+        function validateForm() {
+            const hasColumns = Array.from(columnCheckboxes).some(cb => cb.checked);
+            const hasPlotType = Array.from(plotTypeRadios).some(radio => radio.checked);
+            
+            submitBtn.disabled = !(hasColumns && hasPlotType);
+        }
+
+        columnCheckboxes.forEach(cb => cb.addEventListener('change', validateForm));
+        plotTypeRadios.forEach(radio => radio.addEventListener('change', validateForm));
+
+        // Initialize validation
+        validateForm();
+
+        // Plot type selection feedback
+        plotTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Remove active class from all plot options
+                document.querySelectorAll('.plot-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                
+                // Add active class to selected option
+                if (this.checked) {
+                    this.closest('.plot-option').classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

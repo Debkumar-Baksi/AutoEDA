@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoEDA - Generated Plots</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> AutoEDA</h1>
+            <p class="subtitle">Generated Plots</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">
+                            <i class="fas fa-{% if category == 'error' %}exclamation-circle{% elif category == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if filename %}
+        <div class="file-info-card">
+            <h2><i class="fas fa-file-csv"></i> {{ filename }}</h2>
+            <div class="analysis-info">
+                <span><i class="fas fa-chart-bar"></i> {{ plot_type|title }}</span>
+                <span><i class="fas fa-columns"></i> {{ columns|length }} column(s) selected</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error-section">
+                <div class="error-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error Generating Plot</h3>
+                    <p>{{ error }}</p>
+                    <div class="error-actions">
+                        <a href="{{ url_for('options') }}" class="btn">
+                            <i class="fas fa-arrow-left"></i>
+                            Try Again
+                        </a>
+                        <form action="{{ url_for('clear_session') }}" method="post" style="display: inline;">
+                            <button type="submit" class="secondary-btn">
+                                <i class="fas fa-upload"></i>
+                                Upload New File
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% elif plots %}
+            <div class="results-section">
+                <div class="results-header">
+                    <h2><i class="fas fa-chart-area"></i> Generated Plot(s)</h2>
+                    <p>Your visualization has been successfully created!</p>
+                </div>
+
+                <div class="plots-container">
+                    {% for plot in plots %}
+                        <div class="plot-card">
+                            <div class="plot-image">
+                                <img src="{{ url_for('static', filename='plots/' + plot) }}" 
+                                     alt="Generated Plot" 
+                                     loading="lazy"
+                                     onclick="openImageModal(this.src)">
+                            </div>
+                            <div class="plot-actions">
+                                <a href="{{ url_for('static', filename='plots/' + plot) }}" 
+                                   download="{{ plot }}" 
+                                   class="download-btn">
+                                    <i class="fas fa-download"></i>
+                                    Download PNG
+                                </a>
+                                <button class="view-btn" data-plot-url="{{ url_for('static', filename='plots/' + plot) }}">
+                                    <i class="fas fa-expand"></i>
+                                    View Full Size
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="results-actions">
+                    <a href="{{ url_for('options') }}" class="btn">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Another Plot
+                    </a>
+                    
+                    <form action="{{ url_for('clear_session') }}" method="post" style="display: inline;">
+                        <button type="submit" class="secondary-btn">
+                            <i class="fas fa-upload"></i>
+                            Upload New File
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="no-results">
+                <div class="no-results-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>No Plots Generated</h3>
+                    <p>Something went wrong during plot generation. Please try again with different options.</p>
+                    <div class="no-results-actions">
+                        <a href="{{ url_for('options') }}" class="btn">
+                            <i class="fas fa-arrow-left"></i>
+                            Try Again
+                        </a>
+                        <form action="{{ url_for('clear_session') }}" method="post" style="display: inline;">
+                            <button type="submit" class="secondary-btn">
+                                <i class="fas fa-upload"></i>
+                                Upload New File
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <img id="modalImage" src="" alt="Full size plot">
+        </div>
+    </div>
+
+    <script>
+        // Image modal functionality
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const closeBtn = document.getElementsByClassName('close')[0];
+
+        function openImageModal(src) {
+            modal.style.display = 'block';
+            modalImg.src = src;
+        }
+
+        // Add event listeners for view buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const viewButtons = document.querySelectorAll('.view-btn');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const plotUrl = this.getAttribute('data-plot-url');
+                    openImageModal(plotUrl);
+                });
+            });
+        });
+
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
